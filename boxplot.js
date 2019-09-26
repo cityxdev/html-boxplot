@@ -1,6 +1,9 @@
 if(typeof org === 'undefined')
     org={cityxdev:{}};
 
+if(!org.cityxdev) {
+    org.cityxdev={boxplot:{}};
+}
 if(!org.cityxdev.boxplot) {
     org.cityxdev.boxplot = {};
 }
