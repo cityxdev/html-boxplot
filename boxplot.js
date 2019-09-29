@@ -9,7 +9,6 @@ if(!org.cityxdev.boxplot) {
 }
 
 org.cityxdev.boxplot.BoxPlot = function(options) {
-    const me=this;
     let opts = options;
     const $target=opts.$target;
 
@@ -23,11 +22,13 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
         return isMobile;
     };
 
-    let p25,p50,p75,median,min,max,totalDelta,IQR,plotMin,plotMax,plotDelta,boxMin,boxMax,boxDelta;
+    let data,p25,p50,p75,median,min,max,totalDelta,IQR,plotMin,plotMax,plotDelta,boxMin,boxMax,boxDelta;
     let decimalPlaces;
 
     let height,width,borderWidthPx,borderColor,boxWidthPx,boxBorderColor,boxBackgroundColor,medColor,medWidthPx;
     let legendLabelColor,legendValueColor,legendBackgroundColor,legendBorderColor,legendBorderWidthPx;
+
+    let error;
 
     let minTranslation,q1Translation,medTranslation,q3Translation,maxTranslation,iqrTranslation;
 
@@ -41,27 +42,79 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
     };
 
     const _loadValues = function() {
-        p25 = opts.values.p25;
-        p50 = opts.values.p50;
-        p75 = opts.values.p75;
-        decimalPlaces = opts.values.decimalPlaces!==undefined?opts.values.decimalPlaces:2;
+        decimalPlaces = opts.values.decimalPlaces !== undefined ? opts.values.decimalPlaces : 2;
+        data = opts.values.data;
 
-        median=p50;
+        if(data){
+            if(data.length<=1){
+                error=true;
+                console.log('ERROR: wrong input data.');
+                return;
+            }
 
-        boxMin=p25;
-        boxMax=p75;
-        boxDelta=boxMax-boxMin;
+            data.sort(function (a,b) {
+                return a-b;
+            });
+
+            p25 = _quantile(data,25);
+            p50 = _quantile(data,50);
+            p75 = _quantile(data,75);
+
+            min = data[0];
+            max = data[data.length-1];
+        } else {
+            p25 = opts.values.p25;
+            p50 = opts.values.p50;
+            p75 = opts.values.p75;
+
+            min = opts.values.min;
+            max = opts.values.max;
+
+            if(p25===null||p25===undefined||p50===null||p50===undefined||p75===null||p75===undefined||p25>p50||p50>p75){
+                error=true;
+                console.log('ERROR: wrong input data.');
+                return;
+            }
+
+            if(min!==null&&min!==undefined && min>p25){
+                error=true;
+                console.log('ERROR: wrong input data.');
+                return;
+            }
+
+            if(max!==null&&max!==undefined && max<p75){
+                error=true;
+                console.log('ERROR: wrong input data.');
+                return;
+            }
+        }
+
+        median = p50;
+
+        boxMin = p25;
+        boxMax = p75;
+        boxDelta = boxMax - boxMin;
 
         IQR = p75 - p25;
-        plotMin = Math.max(p25 - IQR * 1.5,opts.values.min!==undefined?opts.values.min:Number.MIN_VALUE);
-        plotMax = Math.min(p75 + IQR * 1.5,opts.values.max!==undefined?opts.values.max:Number.MAX_VALUE);
+        plotMin = Math.max(p25 - IQR * 1.5, min !== undefined ? min : Number.MIN_VALUE);
+        plotMax = Math.min(p75 + IQR * 1.5, max !== undefined ? max : Number.MAX_VALUE);
         plotDelta = plotMax - plotMin;
 
-        min = opts.values.min !== undefined ? opts.values.min : plotMin;
-        max = opts.values.max !== undefined ? opts.values.max : plotMax;
+        min = min !== undefined ? min : plotMin;
+        max = max !== undefined ? max : plotMax;
         totalDelta = max - min;
     };
 
+    const _quantile = function(sortedArray, percentile) {
+        let index = percentile/100.0 * (sortedArray.length-1);
+        if (Math.floor(index) === index) {
+            return sortedArray[index];
+        } else {
+            let i = Math.floor(index);
+            let fraction = index - i;
+            return sortedArray[i] + (sortedArray[i+1] - sortedArray[i]) * fraction;
+        }
+    };
 
     const _loadStyles = function() {
         height = opts.style && opts.style.height !== undefined ? opts.style.height : '20px';
@@ -83,7 +136,6 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
         legendBorderColor = opts.style && opts.style.legendBorderColor !== undefined ? opts.style.legendBorderColor : 'black';
         legendBorderWidthPx = opts.style && opts.style.legendBorderWidthPx !== undefined ? opts.style.legendBorderWidthPx : 1;
     };
-
 
     let boxPlotElems = undefined;
 
@@ -137,17 +189,17 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
                 '<tr><td><label>'+minTranslation+'</label></td><td class="min-val"></td></tr>' +
                 '<tr><td><label>'+q1Translation+'</label></td><td class="q1-val"></td></tr>' +
                 '<tr><td><label>'+medTranslation+'</label></td><td class="med-val"></td></tr>' +
-                '<tr><td><label>'+iqrTranslation+'</label></td><td class="iqr-val"></td></tr>' +
                 '<tr><td><label>'+q3Translation+'</label></td><td class="q3-val"></td></tr>' +
                 '<tr><td><label>'+maxTranslation+'</label></td><td class="max-val"></td></tr>' +
+                '<tr><td><label>'+iqrTranslation+'</label></td><td class="iqr-val"></td></tr>' +
                 '</table>'
             ));
             $('td.min-val',legendElem).html(min.toFixed(decimalPlaces));
             $('td.q1-val',legendElem).html(p25.toFixed(decimalPlaces));
             $('td.med-val',legendElem).html(median.toFixed(decimalPlaces));
-            $('td.iqr-val',legendElem).html(IQR.toFixed(decimalPlaces));
             $('td.q3-val',legendElem).html(p75.toFixed(decimalPlaces));
             $('td.max-val',legendElem).html(max.toFixed(decimalPlaces));
+            $('td.iqr-val',legendElem).html(IQR.toFixed(decimalPlaces));
 
             $('table td',legendElem).css('vertical-align','middle');
             $('table td label',legendElem).css('margin','0').css('color',legendLabelColor);
@@ -204,20 +256,19 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
         let localPlotMax = plotMax;
         let localPlotDelta = plotDelta;
 
-        let error = false;
         if(localPlotMin<min){
             error=true;
-            console.log('ERROR: (p25 - IQR * 1.5) < min ')
+            console.log('ERROR: (p25 - IQR * 1.5) < min ');
         }
 
         if(localPlotMin>boxMin){
             error=true;
-            console.log('ERROR: (p25 - IQR * 1.5) > p25 ')
+            console.log('ERROR: (p25 - IQR * 1.5) > p25 ');
         }
 
         if(localPlotMax>max){
             error=true;
-            console.log('ERROR: (p75 + IQR * 1.5) > max ')
+            console.log('ERROR: (p75 + IQR * 1.5) > max ');
         }
 
         if(localPlotMax<boxMax){
@@ -251,6 +302,7 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
     };
 
     this.redraw = function (options) {
+        error=false;
         if(options)
             opts=options;
         _loadValues();
