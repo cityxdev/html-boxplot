@@ -100,9 +100,9 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
         plotMax = Math.min(p75 + IQR * 1.5, max !== undefined ? max : Number.MAX_VALUE);
         plotDelta = plotMax - plotMin;
 
-        min = min !== undefined ? min : plotMin;
-        max = max !== undefined ? max : plotMax;
-        totalDelta = max - min;
+        // min = min !== undefined ? min : plotMin;
+        // max = max !== undefined ? max : plotMax;
+        totalDelta = (max !== undefined ? max : plotMax) - (min !== undefined ? min : plotMin);
     };
 
     const _quantile = function(sortedArray, percentile) {
@@ -186,19 +186,30 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
 
             legendElem.append($(
                 '<table>' +
-                '<tr><td><label>'+minTranslation+'</label></td><td class="min-val"></td></tr>' +
+                '<tr class="min"><td><label>'+minTranslation+'</label></td><td class="min-val"></td></tr>' +
                 '<tr><td><label>'+q1Translation+'</label></td><td class="q1-val"></td></tr>' +
                 '<tr><td><label>'+medTranslation+'</label></td><td class="med-val"></td></tr>' +
                 '<tr><td><label>'+q3Translation+'</label></td><td class="q3-val"></td></tr>' +
-                '<tr><td><label>'+maxTranslation+'</label></td><td class="max-val"></td></tr>' +
+                '<tr class="max"><td><label>'+maxTranslation+'</label></td><td class="max-val"></td></tr>' +
                 '<tr><td><label>'+iqrTranslation+'</label></td><td class="iqr-val"></td></tr>' +
                 '</table>'
             ));
-            $('td.min-val',legendElem).html(min.toFixed(decimalPlaces));
+
+            if(min===undefined || min===null){
+                $('tr.min',boxPlotElems).hide();
+            } else {
+                $('td.min-val',legendElem).html(min.toFixed(decimalPlaces));
+            }
+            if(max===undefined || max===null){
+                $('tr.max',boxPlotElems).hide();
+            } else {
+                $('td.max-val',legendElem).html(max.toFixed(decimalPlaces));
+            }
+
             $('td.q1-val',legendElem).html(p25.toFixed(decimalPlaces));
             $('td.med-val',legendElem).html(median.toFixed(decimalPlaces));
             $('td.q3-val',legendElem).html(p75.toFixed(decimalPlaces));
-            $('td.max-val',legendElem).html(max.toFixed(decimalPlaces));
+
             $('td.iqr-val',legendElem).html(IQR.toFixed(decimalPlaces));
 
             $('table td',legendElem).css('vertical-align','middle');
