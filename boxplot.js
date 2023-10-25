@@ -196,12 +196,12 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
             ));
 
             if(min===undefined || min===null){
-                $('tr.min',boxPlotElems).hide();
+                $('tr.min',legendElem).hide();
             } else {
                 $('td.min-val',legendElem).html(min.toFixed(decimalPlaces));
             }
             if(max===undefined || max===null){
-                $('tr.max',boxPlotElems).hide();
+                $('tr.max',legendElem).hide();
             } else {
                 $('td.max-val',legendElem).html(max.toFixed(decimalPlaces));
             }
