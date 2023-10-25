@@ -153,72 +153,74 @@ org.cityxdev.boxplot.BoxPlot = function(options) {
             '</div>'
         );
 
-        if(_isMobile()) {
-            $('body').click(function (event) {
-                if ($(event.target).parents('.box-plot-container').length === 0) {
-                    hideLegend();
+        if(!opts.hideLegend) {
+            if (_isMobile()) {
+                $('body').click(function (event) {
+                    if ($(event.target).parents('.box-plot-container').length === 0) {
+                        hideLegend();
+                    }
+                });
+                boxPlotElems.click(function () {
+                    showLegend();
+                });
+            } else {
+                boxPlotElems.on({
+                    mouseenter: showLegend,
+                    mouseleave: hideLegend
+                });
+            }
+
+            function hideLegend() {
+                $('div.box-plot-legend').remove();
+            }
+
+            function showLegend() {
+                const legendElem = $('<div class="box-plot-legend" style="display: none;"></div>');
+                legendElem.css('position', 'absolute');
+                legendElem.css('top', boxPlotElems.offset().top + 'px');
+                legendElem.css('left', (boxPlotElems.offset().left + boxPlotElems.width() + 2) + 'px');
+                legendElem.css('z-index', 10000);
+                legendElem.css('padding', '5px');
+
+                legendElem.css('background-color', legendBackgroundColor);
+                legendElem.css('border', legendBorderWidthPx + 'px solid ' + legendBorderColor);
+                legendElem.css('border-radius', '4px');
+
+                legendElem.append($(
+                    '<table>' +
+                    '<tr class="min"><td><label>' + minTranslation + '</label></td><td class="min-val"></td></tr>' +
+                    '<tr><td><label>' + q1Translation + '</label></td><td class="q1-val"></td></tr>' +
+                    '<tr><td><label>' + medTranslation + '</label></td><td class="med-val"></td></tr>' +
+                    '<tr><td><label>' + q3Translation + '</label></td><td class="q3-val"></td></tr>' +
+                    '<tr class="max"><td><label>' + maxTranslation + '</label></td><td class="max-val"></td></tr>' +
+                    '<tr><td><label>' + iqrTranslation + '</label></td><td class="iqr-val"></td></tr>' +
+                    '</table>'
+                ));
+
+                if (min === undefined || min === null) {
+                    $('tr.min', legendElem).hide();
+                } else {
+                    $('td.min-val', legendElem).html(min.toFixed(decimalPlaces));
                 }
-            });
-            boxPlotElems.click(function () {
-                showLegend();
-            });
-        }else {
-            boxPlotElems.on({
-                mouseenter: showLegend,
-                mouseleave: hideLegend
-            });
-        }
+                if (max === undefined || max === null) {
+                    $('tr.max', legendElem).hide();
+                } else {
+                    $('td.max-val', legendElem).html(max.toFixed(decimalPlaces));
+                }
 
-        function hideLegend() {
-            $('div.box-plot-legend').remove();
-        }
-        function showLegend() {
-            const legendElem = $('<div class="box-plot-legend" style="display: none;"></div>');
-            legendElem.css('position','absolute');
-            legendElem.css('top',boxPlotElems.offset().top+'px');
-            legendElem.css('left',(boxPlotElems.offset().left+boxPlotElems.width()+2)+'px');
-            legendElem.css('z-index',10000);
-            legendElem.css('padding','5px');
+                $('td.q1-val', legendElem).html(p25.toFixed(decimalPlaces));
+                $('td.med-val', legendElem).html(median.toFixed(decimalPlaces));
+                $('td.q3-val', legendElem).html(p75.toFixed(decimalPlaces));
 
-            legendElem.css('background-color',legendBackgroundColor);
-            legendElem.css('border',legendBorderWidthPx+'px solid '+legendBorderColor);
-            legendElem.css('border-radius','4px');
+                $('td.iqr-val', legendElem).html(IQR.toFixed(decimalPlaces));
 
-            legendElem.append($(
-                '<table>' +
-                '<tr class="min"><td><label>'+minTranslation+'</label></td><td class="min-val"></td></tr>' +
-                '<tr><td><label>'+q1Translation+'</label></td><td class="q1-val"></td></tr>' +
-                '<tr><td><label>'+medTranslation+'</label></td><td class="med-val"></td></tr>' +
-                '<tr><td><label>'+q3Translation+'</label></td><td class="q3-val"></td></tr>' +
-                '<tr class="max"><td><label>'+maxTranslation+'</label></td><td class="max-val"></td></tr>' +
-                '<tr><td><label>'+iqrTranslation+'</label></td><td class="iqr-val"></td></tr>' +
-                '</table>'
-            ));
+                $('table td', legendElem).css('vertical-align', 'middle');
+                $('table td label', legendElem).css('margin', '0').css('color', legendLabelColor);
 
-            if(min===undefined || min===null){
-                $('tr.min',legendElem).hide();
-            } else {
-                $('td.min-val',legendElem).html(min.toFixed(decimalPlaces));
+                $('body').append(legendElem);
+                legendElem.show();
             }
-            if(max===undefined || max===null){
-                $('tr.max',legendElem).hide();
-            } else {
-                $('td.max-val',legendElem).html(max.toFixed(decimalPlaces));
-            }
-
-            $('td.q1-val',legendElem).html(p25.toFixed(decimalPlaces));
-            $('td.med-val',legendElem).html(median.toFixed(decimalPlaces));
-            $('td.q3-val',legendElem).html(p75.toFixed(decimalPlaces));
-
-            $('td.iqr-val',legendElem).html(IQR.toFixed(decimalPlaces));
-
-            $('table td',legendElem).css('vertical-align','middle');
-            $('table td label',legendElem).css('margin','0').css('color',legendLabelColor);
-
-            $('body').append(legendElem);
-            legendElem.show();
         }
-
     };
 
     const _applyStyles = function() {
